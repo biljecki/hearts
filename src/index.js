@@ -1,6 +1,9 @@
 import Phaser from "phaser";
 import yellowHeart from "./assets/yellow_heart.png";
 import redHeart from "./assets/redHeart.png";
+import cursor from './assets/Kindness.cur'
+
+console.log(cursor)
 
 const config = {
   type: Phaser.AUTO,
@@ -25,6 +28,10 @@ function preload() {
 function create() {
   this.onObjectClicked = onObjectClicked;
   this.easeOut = easeOut;
+
+
+
+  this.input.setDefaultCursor(`url(${cursor}), pointer`);
 
   // let hearts = [];
 
@@ -53,7 +60,7 @@ function create() {
     therock.setData("vy", Math.random(0.005) - 0.0025);
     therock.setData("id", i);
 
-    therock.setOrigin(0);
+    therock.setOrigin(0.5);
     therock.setScale(Phaser.Math.FloatBetween(0.1, 0.3));
 
     let rotationSpeed = 0;
@@ -62,6 +69,8 @@ function create() {
     if (willRotate) rotationSpeed = (Math.random() - 0.5) / 10;
 
     therock.setData("rotate", rotationSpeed);
+    therock.setData('clickable', true)
+
 
     therock.setInteractive();
 
@@ -73,7 +82,11 @@ function create() {
 
 function onObjectClicked(pointer, gameObject) {
   console.log(gameObject);
-  if (gameObject) {
+  if (gameObject && gameObject.getData("clickable")) {
+
+    gameObject.setData('clickable', false)
+
+    gameObject.depth = 1
     gameObject.setTexture("redHeart");
     // this.asteroids = this.asteroids.filter(
     //   heart => heart.getData("id") !== gameObject.getData("id")
@@ -87,7 +100,7 @@ function onObjectClicked(pointer, gameObject) {
       scaleX: 1,
       scaleY: 1,
       ease: "Sine.easeInOut",
-      duration: 300,
+      duration: 600,
       repeat: 0,
       onComplete: onCompleteGrowHandler,
       onCompleteParams: [self]
