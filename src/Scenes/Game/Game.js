@@ -1,11 +1,38 @@
 import SCENE_CONSTANTS from "../../cst/scenePositions";
 
-import yellowHeart from "../../assets/yellow_heart.png";
-import redHeart from "../../assets/redHeart.png";
+import brko1 from "../../assets/brko_1.png";
+import brko2 from "../../assets/brko_2.png";
+import brko3 from "../../assets/brko_3.png";
 import corner from "../../assets/corner.png";
 
 import cursor from '../../assets/cursor.cur';
 
+const LEVELS = {
+  LEVEL_1: {
+    LEVEL: 1,
+    SCALE: 1,
+    IMAGE: "brko1",
+    SPEED_MIN: 0.8,
+    SPEED_MAX: 1,
+    SCORE: 20
+  },
+  LEVEL_2: {
+    LEVEL: 2,
+    SCALE: 1.5,
+    IMAGE: "brko2",
+    SPEED_MIN: 0.5,
+    SPEED_MAX: 0.8,
+    SCORE: 5,
+  },
+  LEVEL_3: {
+    LEVEL: 3,
+    SCALE: 2,
+    IMAGE: "brko3",
+    SPEED_MIN: 0.2,
+    SPEED_MAX: 0.5,
+    SCORE: 1
+  },
+}
 
 const GAME_MAP_SIZE = 1600;
 
@@ -14,13 +41,26 @@ class Game extends Phaser.Scene {
     super({ key: "Game", active: true });
     this.onCompleteGrowHandler = this.onCompleteGrowHandler.bind(this);
     this.onCompleteShrinkHandler = this.onCompleteShrinkHandler.bind(this);
+    this.index = 0;
   }
 
 
   //TODO: REFACTOR +400 - 400 PX TO SMT MORE APPROPIRATE N00B
 
+  getSpeed(level){
+    let vq = Math.round(Math.random());
+
+    if (vq==0) { 
+      vq = -1 
+    } else {
+      vq = 1
+    }
+    return vq * (Math.random(level.SPEED_MIN) + level.SPEED_MAX)
+  }
+
  //CUSTOM METHODS::: 
-  generateHeart(index){
+  generateHeart(level, posX, posY){
+
     let py = Math.round(Math.random());
     let px = Math.round(Math.random());
     let posx, posy, vx, vy;
@@ -54,21 +94,27 @@ class Game extends Phaser.Scene {
       vx = -Math.random(0.1);
     }
 
+    if (posX) {
+      vy = this.getSpeed(level)
+      vx = this.getSpeed(level)
+    }
+    
+    
 
-    const heart = this.add.sprite(posx, posy, "yellowHeart");
-
+    const heart = this.add.sprite(posX || posx, posY || posy, level.IMAGE);
 
     heart.setData("vx", vx);
     heart.setData("vy", vy);
-    heart.setData("id", index);
+    heart.setData("id", this.index++);
+    heart.setData("level", level)
 
     heart.setOrigin(0.5);
-    heart.setScale(Phaser.Math.FloatBetween(0.1, 0.3));
+    // heart.setScale(Phaser.Math.FloatBetween(0.1, 0.3));
+    heart.setScale(level.SCALE);
 
     let rotationSpeed = 0;
 
-    let willRotate = chance(25);
-    if (willRotate) rotationSpeed = (Math.random() - 0.5) / 10;
+    rotationSpeed = (Math.random() - 0.5) / 10;
 
     heart.setData("rotate", rotationSpeed);
     heart.setData("clickable", true);
@@ -77,20 +123,22 @@ class Game extends Phaser.Scene {
     return heart;
   }
 
-  onObjectClicked(pointer, gameObject, ahaha, bafa) {
+  onObjectClicked(_, gameObject) {
     if (gameObject && gameObject.getData("clickable")) {
   
       gameObject.setData('clickable', false)
   
       gameObject.depth = 1
-      gameObject.setTexture("redHeart");
+
+
+      gameObject.setTexture(gameObject.getData("level").IMAGE);
      
       let self = this;
   
       this.tweens.add({
         targets: gameObject,
-        scaleX: 1,
-        scaleY: 1,
+        scaleX: randomGen(),
+        scaleY: randomGen(),
         ease: "Sine.easeInOut",
         duration: 600,
         repeat: 0,
@@ -100,15 +148,19 @@ class Game extends Phaser.Scene {
   }
 
   onCompleteGrowHandler(tween, [heart], self) {
-    this.tweens.add({
-      targets: heart,
-      scaleX: 0,
-      scaleY: 0,
-      ease: "Sine.easeOut",
-      duration: 300,
-      repeat: 0,
-      onComplete: this.onCompleteShrinkHandler,
-    });
+
+    const level = heart.getData("level").LEVEL;
+
+    this.score += heart.getData("level").SCORE
+    this.registry.set('score', this.score);
+    
+    if (level > 1) {
+      
+      this.hearts.push(this.generateHeart(LEVELS["LEVEL_" + (level-1)],heart.x, heart.y))
+      this.hearts.push(this.generateHeart(LEVELS["LEVEL_" + (level-1)],heart.x, heart.y))
+    }
+
+    heart.destroy();
   }
   
   onCompleteShrinkHandler(tween, [heart]) {
@@ -117,13 +169,14 @@ class Game extends Phaser.Scene {
     );
    
     heart.destroy();
-    this.registry.set('score', ++this.score);
-
+    
   }
 
   preload() {
-    this.load.image("yellowHeart", yellowHeart);
-    this.load.image("redHeart", redHeart);
+    this.load.image("brko3", brko3);
+    this.load.image("brko2", brko2);
+    this.load.image("brko1", brko1);
+
     this.load.image("corner", corner);
   }
 
@@ -196,8 +249,8 @@ class Game extends Phaser.Scene {
 
     //GAME OBJECTS
     this.hearts = [];
-    for (let i = 0; i < 200; i++) {
-      this.hearts.push(this.generateHeart(i));
+    for (let i = 0; i < 50; i++) {
+      this.hearts.push(this.generateHeart(LEVELS.LEVEL_3));
     }
 
     //EVENT LISTNERS
@@ -230,19 +283,32 @@ class Game extends Phaser.Scene {
       heart.y += (heart.getData("vy") * delta) / 4;
   
       heart.rotation += heart.getData("rotate");
+      heart.getData("level")
 
+      if ( heart.x <=-500 || heart.x > GAME_MAP_SIZE + 500) {
+          heart.setData("vx",  heart.getData("vx") * -1) 
+        }
+        
       if (
-        heart.x <=-500 ||
-        heart.x > GAME_MAP_SIZE + 500 ||
         heart.y < -500 ||
         heart.y > GAME_MAP_SIZE + 500
       ) {
-        let id = heart.getData('id');
-        this.hearts[i].destroy();
-        this.hearts[i] = this.generateHeart(id);
+        heart.setData("vy",  heart.getData("vy") * -1) 
       }
-    }
 
+
+      // if (
+      //   heart.x <=-500 ||
+      //   heart.x > GAME_MAP_SIZE + 500 ||
+      //   heart.y < -500 ||
+      //   heart.y > GAME_MAP_SIZE + 500
+      // ) {
+      //   let level = heart.getData("level").LEVEL;
+      //   this.hearts[i] = this.generateHeart(level);
+      //   this.hearts[i].destroy();    
+      // }
+    
+    }
   }
 }
 
@@ -250,3 +316,8 @@ class Game extends Phaser.Scene {
 const chance = x => x < Math.random() * 100;
 
 export default Game;
+
+
+const randomGen = () => {
+  return Math.random() * 10 + 2
+}

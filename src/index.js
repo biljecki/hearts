@@ -5,6 +5,7 @@ import Phaser from "phaser";
 // import SideBar from './Scenes/SideBar';
 import Game from './Scenes/Game';
 import ControlBoard from './Scenes/ControlBoard';
+import ScoreThingy from './Scenes/ScoreThingy.js';
 
 
 import SCENE_CONSTANTS from './cst/scenePositions';
@@ -15,7 +16,7 @@ let config = {
   height: SCENE_CONSTANTS.CONTAINER_HEIGHT,
   parent: 'phaser-example',
   backgroundColor: '#000000',
-  scene: [ Game, ControlBoard ]
+  scene: [ Game, ControlBoard, ScoreThingy ]
 };
 
 let game = new Phaser.Game(config);
