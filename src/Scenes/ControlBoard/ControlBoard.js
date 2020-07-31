@@ -21,8 +21,8 @@ class ControlBoard extends Phaser.Scene {
     camera.setViewport(800, 5, 400, 300);
     camera.setBackgroundColor("rgba(0, 255, 0, 0.5)");
 
-    this.score = this.add.text(100, 100, 'Score: 0 lol');
-    this.help = this.add.text(100, 120, 'Move camera with wasd');
+    this.score = this.add.text(100, 100, 'Rezultat: 0 lol');
+    this.help = this.add.text(100, 120, 'Pomerati sa slovma wasd');
 
 
     this.registry.events.on('changedata', this.updateScore, this);
@@ -31,7 +31,7 @@ class ControlBoard extends Phaser.Scene {
   }
 
   updateScore(parent, key, data){
-      this.score.setText('Score: ' + data);
+      this.score.setText('Rezultat: ' + data);
   }
 
   update(time, delta) {
